@@ -5,6 +5,9 @@
  */
 
 #include "check.h"
+#include "token.h"
+
+#define SIGNATURE "###"
 
 char **
 request_authorization_1_svc(char **argp, struct svc_req *rqstp)
@@ -15,6 +18,8 @@ request_authorization_1_svc(char **argp, struct svc_req *rqstp)
 	 * insert server code here
 	 */
 
+	char* clientIdToken = (char*) &argp;
+	result = generate_access_token(clientIdToken);
 	return &result;
 }
 
@@ -26,7 +31,13 @@ request_access_token_1_svc(struct request_access_token_input *argp, struct svc_r
 	/*
 	 * insert server code here
 	 */
-
+	char *auth_token = argp->auth_token;
+	char *client_id = argp->client_id;
+	
+	result.resource_access_token = generate_access_token(auth_token);
+	result.refresh_token =generate_access_token(result.resource_access_token);
+	result.request_response = "OK";
+	result.duration = 1;
 	return &result;
 }
 
@@ -38,7 +49,7 @@ validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, st
 	/*
 	 * insert server code here
 	 */
-
+	
 	return &result;
 }
 
@@ -50,6 +61,7 @@ approve_request_token_1_svc(char **argp, struct svc_req *rqstp)
 	/*
 	 * insert server code here
 	 */
-
+	char *token = (char*) argp;
+	result = strcat(token, SIGNATURE);
 	return &result;
 }
