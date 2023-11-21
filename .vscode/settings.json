@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "clnt.h": "c",
-        "memory.h": "c"
+        "memory.h": "c",
+        "check.h": "c"
     }
 }
