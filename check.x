@@ -18,7 +18,7 @@ struct validate_delegated_action_input {
 
 program CHECKPROG {
     version CHECKVERS {
-        /* auth_token request request_authorization(client_id) */
+        /* auth_token request_authorization(client_id) */
         string request_authorization(string) = 1;
 		
         /* (resource_access_token + refresh_token + duration + request_response) request_access_token(client_id + auth_token) */
