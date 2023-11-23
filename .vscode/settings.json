@@ -2,6 +2,8 @@
     "files.associations": {
         "clnt.h": "c",
         "memory.h": "c",
-        "check.h": "c"
+        "check.h": "c",
+        "server_data.h": "c",
+        "stdio.h": "c"
     }
 }

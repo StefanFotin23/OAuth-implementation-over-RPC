@@ -6,6 +6,7 @@
 
 #include "check.h"
 #include "token.h"
+#include "server_data.h"
 
 #define SIGNATURE "###"
 
@@ -57,6 +58,12 @@ char **
 approve_request_token_1_svc(char **argp, struct svc_req *rqstp)
 {
 	static char * result;
+
+	// // Read and print each line from the file
+    // char line[LINE_MAX_SIZE];
+	// while (fgets(line, sizeof(line), file3) != NULL) {
+	
+	// }
 
 	/*
 	 * insert server code here

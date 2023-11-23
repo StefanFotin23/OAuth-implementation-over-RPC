@@ -26,6 +26,8 @@ void process_request(CLIENT *clnt, char *client_id) {
 	}
 	char *auth_token = (char*) &auth_token_aux;
 
+	// if
+
 	// Approve Request Token
 	char **signed_auth_token_aux = approve_request_token_1(&auth_token, clnt);
 	if (signed_auth_token_aux == (char **) NULL) {
@@ -35,29 +37,31 @@ void process_request(CLIENT *clnt, char *client_id) {
 
 	// Request Access Token
 	struct request_access_token_input req_acc_token_in;
-	req_acc_token_in.auth_token = auth_token;
+	req_acc_token_in.auth_token = signed_auth_token;
 	req_acc_token_in.client_id = client_id;
 	struct request_access_token_output *req_acc_token_out = request_access_token_1(&req_acc_token_in, clnt);
 	if (req_acc_token_out == (struct request_access_token_output *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
+
+	// if not signed, afisez mesajul de eroare.
 }
 
 int
 main (int argc, char *argv[])
 {
-	if (argc < 2) {
-		printf ("usage: %s input file path\n", argv[0]);
+	if (argc < 3) {
+		printf ("usage: %s server_address input_file_path\n", argv[0]);
 		exit (1);
 	}
-	char *inputFile = argv[1];
+	char *server_address = argv[1];
+	char *inputFile = argv[2];
 
 	// Init host (server address) and client for RPC
-	char *host = "127.0.0.1";
-	CLIENT *clnt = clnt_create (host, CHECKPROG, CHECKVERS, "tcp");
+	CLIENT *clnt = clnt_create (server_address, CHECKPROG, CHECKVERS, "tcp");
 	if (clnt == NULL) {
-		clnt_pcreateerror (host);
-		printf("Error occured creating client to communicate with server=%s\n", host);
+		clnt_pcreateerror (server_address);
+		printf("Error occured creating client to communicate with server=%s\n", server_address);
 		exit (1);
 	}
 

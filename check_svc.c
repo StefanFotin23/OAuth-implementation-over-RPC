@@ -11,10 +11,19 @@
 #include <memory.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include "server_data.h"
 
 #ifndef SIG_PF
 #define SIG_PF void(*)(int)
 #endif
+
+#define LINE_MAX_SIZE 128
+
+int USER_ID_SIZE = 15;
+int RESOURCES_MAX_SIZE = 20;
+FILE *file3;
+char **user_ids_list;
+char **resources_list;
 
 static void
 checkprog_1(struct svc_req *rqstp, register SVCXPRT *transp)
@@ -105,8 +114,68 @@ main (int argc, char **argv)
 		exit(1);
 	}
 
+	// Get server data from files
+	if (argc < 4) {
+		printf ("usage: %s userIDs.db resources.db approvals.db\n", argv[0]);
+		exit (1);
+	}
+	char *userIDs = argv[1];
+	char *resources = argv[2];
+	char *approvals = argv[3];
+
+	// USERIDS.DB
+    FILE *file1 = fopen(userIDs, "r");
+    if (file1 == NULL) {
+        perror("Error opening userIDs.db");
+        return 1;  // Return an error code
+    }
+
+    char line[LINE_MAX_SIZE];
+	fgets(line, sizeof(line), file1);
+	int id_count = atoi(line);
+	user_ids_list = calloc(id_count, sizeof(char*));
+
+	// Read each line from the file
+	for (int i = 0; i < id_count; i++) {
+		user_ids_list[i] = calloc(USER_ID_SIZE + 1, sizeof(char));
+		fgets(line, sizeof(line), file1);
+		// Copy the line to user_ids_list[i]
+    	strncpy(user_ids_list[i], line, USER_ID_SIZE);
+    	// Ensure null-termination
+    	user_ids_list[i][USER_ID_SIZE] = '\0';
+	}
+	fclose(file1);
+
+	// RESOURCES.DB
+	FILE *file2 = fopen(resources, "r");
+	fgets(line, sizeof(line), file2);
+	int resources_count = atoi(line);
+	resources_list = calloc(id_count, sizeof(char*));
+    if (file2 == NULL) {
+        perror("Error opening resources.db");
+        return 1;  // Return an error code
+    }
+    // Read each line from the file
+	for (int i = 0; i < resources_count; i++) {
+		resources_list[i] = calloc(RESOURCES_MAX_SIZE + 1, sizeof(char));
+		fgets(line, sizeof(line), file1);
+		// Copy the line to user_ids_list[i]
+    	strcpy(user_ids_list[i], line);
+    	// Ensure null-termination
+    	user_ids_list[i][RESOURCES_MAX_SIZE] = '\0';
+	}
+	fclose(file2);
+
+	// APPROVALS.DB
+	file3 = fopen(approvals, "r");
+    if (file3 == NULL) {
+        perror("Error opening approvals.db");
+        return 1;  // Return an error code
+    }
+
 	svc_run ();
 	fprintf (stderr, "%s", "svc_run returned");
+	fclose(file3);
 	exit (1);
 	/* NOTREACHED */
 }
