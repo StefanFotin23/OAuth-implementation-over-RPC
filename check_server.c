@@ -48,6 +48,8 @@ request_authorization_1_svc(char **argp, struct svc_req *rqstp)
 		result = generate_access_token(clientId);
 		printf("  RequestToken = %s\n", result);
 	}
+	// Force the buffer to be flushed
+    fflush(stdout);
 	return &result;
 }
 
@@ -88,6 +90,8 @@ request_access_token_1_svc(struct request_access_token_input *argp, struct svc_r
 		result.refresh_token = REQUEST_DENIED;
 		result.request_response = REQUEST_DENIED;
 	}
+	// Force the buffer to be flushed
+    fflush(stdout);
 	return &result;
 }
 
@@ -121,5 +125,7 @@ approve_request_token_1_svc(char **argp, struct svc_req *rqstp)
 		strcpy(signed_tokens[signed_tokens_index], result);
 		signed_tokens_index++;
 	}
+	// Force the buffer to be flushed
+    fflush(stdout);
 	return &result;
 }
