@@ -47,17 +47,15 @@ void process_request(CLIENT *clnt, char *client_id, int refresh_duration) {
 	req_acc_token_in.auth_token = signed_auth_token;
 	req_acc_token_in.client_id = client_id;
 	req_acc_token_in.refresh_duration = refresh_duration;
-	
-	printf("Approve Request Token 2\n");
+
 	struct request_access_token_output *req_acc_token_out = request_access_token_1(&req_acc_token_in, clnt);
 	if (req_acc_token_out == (struct request_access_token_output *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
-
-	if (strcmp(req_acc_token_out->request_response, OK) != 0) {
-		printf("  %s\n", req_acc_token_out->request_response);
-	} else {
+	if (strcmp(req_acc_token_out->request_response, OK) == 0) {
 		printf("%s -> %s\n", auth_token, req_acc_token_out->resource_access_token);
+	} else {
+		printf("%s\n", req_acc_token_out->request_response);
 	}
 }
 

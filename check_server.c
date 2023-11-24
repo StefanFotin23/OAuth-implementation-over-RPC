@@ -14,6 +14,7 @@
 #define NO_PERMISSIONS "∗,−"
 #define REQUEST_DENIED "REQUEST_DENIED"
 #define OK "OK"
+#define EMPTY "EMPTY"
 
 struct token_permissions {
 	char token[20];
@@ -76,9 +77,9 @@ request_access_token_1_svc(struct request_access_token_input *argp, struct svc_r
 		result.resource_access_token = generate_access_token(auth_token_without_signature);
 		if (refresh_duration > 0) {
 			result.refresh_token = generate_access_token(result.resource_access_token);
-			result.refresh_token = OK;
 		}
 		result.request_response = OK;
+		result.refresh_token = EMPTY;
 		result.duration = refresh_duration;
 		printf("  AccessToken = %s\n", result.resource_access_token);
 	} else {
@@ -87,7 +88,6 @@ request_access_token_1_svc(struct request_access_token_input *argp, struct svc_r
 		result.refresh_token = REQUEST_DENIED;
 		result.request_response = REQUEST_DENIED;
 	}
-	
 	return &result;
 }
 
@@ -109,7 +109,7 @@ approve_request_token_1_svc(char **argp, struct svc_req *rqstp)
 	// Read line from approvals.db
     char line[LINE_MAX_SIZE];
 	fgets(line, sizeof(line), file3);
-	if (strcmp(line, NO_PERMISSIONS) == 0) {
+	if (strstr(line, "*,-") != NULL) {
 		result = token;
 	} else {
 		//add permissions to the token
