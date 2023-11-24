@@ -17,6 +17,7 @@ extern "C" {
 struct request_access_token_input {
 	char *client_id;
 	char *auth_token;
+	int refresh_duration;
 };
 typedef struct request_access_token_input request_access_token_input;
 

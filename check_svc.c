@@ -18,7 +18,6 @@
 #endif
 
 #define LINE_MAX_SIZE 128
-
 int USER_ID_SIZE = 15;
 int RESOURCES_MAX_SIZE = 20;
 FILE *file3;
@@ -160,7 +159,7 @@ main (int argc, char **argv)
     // Read each line from the file
 	for (int i = 0; i < resources_count; i++) {
 		resources_list[i] = calloc(RESOURCES_MAX_SIZE + 1, sizeof(char));
-		fgets(line, sizeof(line), file1);
+		fgets(line, sizeof(line), file2);
 		// Copy the line to user_ids_list[i]
     	strcpy(resources_list[i], line);
     	// Ensure null-termination

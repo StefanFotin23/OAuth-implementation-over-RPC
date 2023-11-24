@@ -1,6 +1,7 @@
 struct request_access_token_input {
     string client_id<>;
     string auth_token<>;
+    int refresh_duration;
 };
 
 struct request_access_token_output {

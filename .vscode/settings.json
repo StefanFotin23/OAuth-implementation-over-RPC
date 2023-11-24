@@ -4,6 +4,10 @@
         "memory.h": "c",
         "check.h": "c",
         "server_data.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "stdlib.h": "c",
+        "string.h": "c",
+        "socket.h": "c",
+        "pmap_clnt.h": "c"
     }
 }

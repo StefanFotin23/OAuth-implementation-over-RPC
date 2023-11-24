@@ -14,6 +14,8 @@ xdr_request_access_token_input (XDR *xdrs, request_access_token_input *objp)
 		 return FALSE;
 	 if (!xdr_string (xdrs, &objp->auth_token, ~0))
 		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->refresh_duration))
+		 return FALSE;
 	return TRUE;
 }
 
