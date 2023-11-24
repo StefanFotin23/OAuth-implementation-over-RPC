@@ -46,6 +46,7 @@ void process_request(CLIENT *clnt, char *client_id, int refresh_duration) {
 	struct request_access_token_input req_acc_token_in;
 	req_acc_token_in.auth_token = signed_auth_token;
 	req_acc_token_in.client_id = client_id;
+	//request_access_token_input.refresh_duration = refresh_duration;
 	struct request_access_token_output *req_acc_token_out = request_access_token_1(&req_acc_token_in, clnt);
 	if (req_acc_token_out == (struct request_access_token_output *) NULL) {
 		clnt_perror (clnt, "call failed");

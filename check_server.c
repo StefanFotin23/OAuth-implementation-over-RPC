@@ -56,6 +56,7 @@ request_access_token_1_svc(struct request_access_token_input *argp, struct svc_r
 	static struct request_access_token_output result;
 	char *auth_token = argp->auth_token;
 	char *client_id = argp->client_id;
+	//int refresh_duration = argp->refresh_duration;
 
 	// check if the token was signed
 	int found = 0;
@@ -73,7 +74,7 @@ request_access_token_1_svc(struct request_access_token_input *argp, struct svc_r
 		strncpy(auth_token_without_signature, auth_token, strlen(auth_token) - strlen(SIGNATURE));
 		// generate the new tokens
 		result.resource_access_token = generate_access_token(auth_token_without_signature);
-		//if () {
+		//if (refresh_duration > 0) {
 
 		//}
 		result.refresh_token =generate_access_token(result.resource_access_token);
