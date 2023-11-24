@@ -10,21 +10,36 @@
 
 #define SIGNATURE "###"
 #define LINE_MAX_SIZE 128
-#define USER_NOT_FOUND "USER_NOT_FOUND"
+#define TOKEN_SIZE 16
 #define NO_PERMISSIONS "∗,−"
+#define USER_NOT_FOUND "USER_NOT_FOUND"
 #define REQUEST_DENIED "REQUEST_DENIED"
+#define PERMISSION_DENIED "PERMISSION_DENIED"
+#define TOKEN_EXPIRED "TOKEN_EXPIRED"
+#define RESOURCE_NOT_FOUND "RESOURCE_NOT_FOUND"
+#define OPERATION_NOT_PERMITTED "OPERATION_NOT_PERMITTED"
+#define PERMISSION_GRANTED "PERMISSION_GRANTED"
 #define OK "OK"
 #define EMPTY "EMPTY"
+#define TOKEN_NOT_FOUND "TOKEN_NOT_FOUND" 
 
 struct token_permissions {
 	char token[20];
 	char permissions[LINE_MAX_SIZE];
 };
 
+struct client_resource_token {
+	char clientId[TOKEN_SIZE];
+	char resource_access_token[TOKEN_SIZE];
+};
+
 struct token_permissions token_permissions_list[20];
+struct client_resource_token client_resource_token_list[20];
 char signed_tokens[20][20];
 int token_permissions_index = 0;
+int client_resource_token_index = 0;
 int signed_tokens_index = 0;
+char server_resource_access_token[TOKEN_SIZE];
 
 char **
 request_authorization_1_svc(char **argp, struct svc_req *rqstp)
@@ -84,6 +99,10 @@ request_access_token_1_svc(struct request_access_token_input *argp, struct svc_r
 		result.refresh_token = EMPTY;
 		result.duration = refresh_duration;
 		printf("  AccessToken = %s\n", result.resource_access_token);
+		// Save in DB: clientId - resource_access_token
+		strcpy(client_resource_token_list[client_resource_token_index].clientId, client_id);
+		strcpy(client_resource_token_list[client_resource_token_index].resource_access_token, result.resource_access_token);
+		client_resource_token_index++;
 	} else {
 		result.resource_access_token = REQUEST_DENIED;
 		result.duration = 0;
@@ -99,8 +118,75 @@ char **
 validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, struct svc_req *rqstp)
 {
 	static char * result;
-
+	char* operation = argp->operation;
+	char* resource = argp->resource;
+	char* resource_access_token = argp->resource_access_token;
 	
+	// struct token_permissions {
+	// 	char token[20];
+	// 	char permissions[LINE_MAX_SIZE];
+	// };
+	// struct client_resource_token {
+	// 	char clientId[TOKEN_SIZE];
+	// 	char resource_access_token[TOKEN_SIZE];
+	// };
+	// struct token_permissions token_permissions_list[20];
+	// struct client_resource_token client_resource_token_list[20];
+
+	// Searching for the token
+	int token_found = 0;
+	int token_index = -1;
+	for (int i = 0; i < client_resource_token_index; i++) {
+		if (strstr(client_resource_token_list[i].resource_access_token, resource_access_token) != NULL) {
+			token_found = 1;
+			token_index = i;
+			break;
+		}
+	}
+	if (token_found == 0) {
+		result = TOKEN_NOT_FOUND;
+		// Force the buffer to be flushed
+    	fflush(stdout);
+		return &result;
+	}
+
+	// Verify if the resource_token is associated with the clientId
+	if (strstr(client_resource_token_list[token_index].clientId, client_id) == NULL) {
+		result = PERMISSION_DENIED;
+		// Force the buffer to be flushed
+    	fflush(stdout);
+		return &result;
+	}
+
+
+	// Searching for the resource wanted on the server DB
+	int resource_found = 0;
+	for (int i = 0; i < resources_count; i++) {
+		if (strcmp(resource, resources_list[i]) == 0) {
+			resource_found = 1;
+			break;
+		}
+	}
+	if (resource_found == 0) {
+		result = RESOURCE_NOT_FOUND;
+		// Force the buffer to be flushed
+    	fflush(stdout);
+		return &result;
+	}
+
+	// Searching for permissions for the operation
+	if (strstr(operation, token_permissions_list[token_index].permissions) == NULL) {
+		result = OPERATION_NOT_PERMITTED;
+		// Force the buffer to be flushed
+    	fflush(stdout);
+		return &result;
+	}
+
+
+
+	result = PERMISSION_GRANTED;
+	// Force the buffer to be flushed
+    fflush(stdout);
 	return &result;
 }
 

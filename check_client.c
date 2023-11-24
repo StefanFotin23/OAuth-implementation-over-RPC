@@ -21,7 +21,7 @@
 #define OK "OK"
 
 // REQUEST
-void process_request(CLIENT *clnt, char *client_id, int refresh_duration) {
+char* process_request(CLIENT *clnt, char *client_id, int refresh_duration) {
 	// Request Authorization
 	char **auth_token_aux = request_authorization_1(&client_id, clnt);
 	if (auth_token_aux == (char **) NULL) {
@@ -32,7 +32,7 @@ void process_request(CLIENT *clnt, char *client_id, int refresh_duration) {
 	if (strcmp(auth_token, USER_NOT_FOUND) == 0) {
 		printf(USER_NOT_FOUND);
 		printf("\n");
-		return;
+		return USER_NOT_FOUND;
 	}
 
 	// Approve Request Token
@@ -57,6 +57,7 @@ void process_request(CLIENT *clnt, char *client_id, int refresh_duration) {
 	} else {
 		printf("%s\n", req_acc_token_out->request_response);
 	}
+	return req_acc_token_out->resource_access_token;
 }
 
 int
@@ -68,6 +69,7 @@ main (int argc, char *argv[])
 	}
 	char *server_address = argv[1];
 	char *inputFile = argv[2];
+	char resource_access_token[16];
 
 	// Init host (server address) and client for RPC
 	CLIENT *clnt = clnt_create (server_address, CHECKPROG, CHECKVERS, "tcp");
@@ -90,31 +92,47 @@ main (int argc, char *argv[])
         // Process each line as needed
 		char client_id[WORD_SIZE];
 		char operation[WORD_SIZE];
-		char duration_string[WORD_SIZE];
+		char last_input_field[WORD_SIZE];
 		int token_duration;
 		strcpy(client_id, strtok(line, DELIMITER));
 		strcpy(operation, strtok(NULL, DELIMITER));
-		strcpy(duration_string, strtok(NULL, DELIMITER));
-		token_duration = atoi(duration_string);
+		strcpy(last_input_field, strtok(NULL, DELIMITER)); // it is either the token_duration or the resource used for operations
 
 		if (strcmp(operation, REQUEST) == 0) {
-			process_request(clnt, client_id, token_duration);
+			token_duration = atoi(last_input_field);
+			strcpy(resource_access_token, process_request(clnt, client_id, token_duration));
 		} else if (
 			strcmp(operation, READ) == 0 ||
 			strcmp(operation, MODIFY) == 0 ||
 			strcmp(operation, DELETE) == 0 ||
 			strcmp(operation, EXECUTE) == 0 ||
-			strcmp(operation, INSERT) == 0 ||
-			strcmp(operation, READ) == 0)
+			strcmp(operation, INSERT) == 0)
 		{
 			// OPERATIONS
 			// Validate Delegated Action
-			struct validate_delegated_action_input validate_delegated_action_1_arg;
-			char **request_response_aux = validate_delegated_action_1(&validate_delegated_action_1_arg, clnt);
+			struct validate_delegated_action_input validate_delegated_action_in;
+			validate_delegated_action_in.resource_access_token = resource_access_token;
+			validate_delegated_action_in.resource = last_input_field;
+
+			// Add to input the operation
+			if (strcmp(operation, READ) == 0) {
+				validate_delegated_action_in.operation = "R";
+			} else if (strcmp(operation, MODIFY) == 0) {
+				validate_delegated_action_in.operation = "M";
+			} else if (strcmp(operation, DELETE) == 0) {
+				validate_delegated_action_in.operation = "D";
+			} else if (strcmp(operation, EXECUTE) == 0) {
+				validate_delegated_action_in.operation = "X";
+			} else if (strcmp(operation, INSERT) == 0) {
+				validate_delegated_action_in.operation = "I";
+			}
+
+			char **request_response_aux = validate_delegated_action_1(&validate_delegated_action_in, clnt);
 			if (request_response_aux == (char **) NULL) {
 				clnt_perror (clnt, "call failed");
 			}
-			char *request_response = (char*) &request_response_aux;
+			char *request_response = *request_response_aux;
+			printf("%s\n", request_response);
 		} else {
 			printf("Operation=%s unexpected!", operation);
 		}
