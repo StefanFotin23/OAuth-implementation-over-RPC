@@ -9,36 +9,82 @@
 #include "server_data.h"
 
 #define SIGNATURE "###"
+#define LINE_MAX_SIZE 128
+#define USER_NOT_FOUND "USER_NOT_FOUND"
+#define NO_PERMISSIONS "∗,−"
+#define REQUEST_DENIED "REQUEST_DENIED"
+#define OK "OK"
+
+struct token_permissions {
+	char token[20];
+	char permissions[LINE_MAX_SIZE];
+};
+
+struct token_permissions token_permissions_list[20];
+char signed_tokens[20][20];
+int token_permissions_index = 0;
+int signed_tokens_index = 0;
 
 char **
 request_authorization_1_svc(char **argp, struct svc_req *rqstp)
 {
 	static char * result;
+	char *clientId = argp[0]; // Assuming clientId is the first argument
 
-	/*
-	 * insert server code here
-	 */
+	printf("BEGIN %s AUTHZ\n", clientId);
 
-	char* clientIdToken = (char*) &argp;
-	result = generate_access_token(clientIdToken);
+	int found = 0;
+	for (int i = 0; i < id_count; i++) {
+		if (strcmp(clientId, user_ids_list[i]) == 0) {
+			found = 1;
+			break;
+		}
+	}
+
+	if (found == 0) {
+		result = USER_NOT_FOUND;
+	} else {
+		result = generate_access_token(clientId);
+		printf("  RequestToken = %s\n", result);
+	}
 	return &result;
 }
 
 struct request_access_token_output *
 request_access_token_1_svc(struct request_access_token_input *argp, struct svc_req *rqstp)
 {
-	static struct request_access_token_output  result;
-
-	/*
-	 * insert server code here
-	 */
+	static struct request_access_token_output result;
 	char *auth_token = argp->auth_token;
 	char *client_id = argp->client_id;
+
+	// check if the token was signed
+	int found = 0;
+	for (int i = 0; i < signed_tokens_index; i++) {
+		if (strcmp(auth_token, signed_tokens[i]) == 0) {
+			found = 1;
+			break;
+		}
+	}
+
+	// if it was signed, continue
+	if (found == 1) {
+		// Getting the original auth_token by getting rid of the signature
+		char *auth_token_without_signature = calloc(20, sizeof(char));
+		strncpy(auth_token_without_signature, auth_token, strlen(auth_token) - strlen(SIGNATURE));
+		// generate the new tokens
+		result.resource_access_token = generate_access_token(auth_token_without_signature);
+		//if () {
+
+		//}
+		result.refresh_token =generate_access_token(result.resource_access_token);
+		result.request_response = OK;
+		result.duration = 1;
+		printf("  AccessToken = %s\n", result.resource_access_token);
+		printf("  RefreshToken = %s\n", result.refresh_token);
+	} else {
+		result.request_response = REQUEST_DENIED;
+	}
 	
-	result.resource_access_token = generate_access_token(auth_token);
-	result.refresh_token =generate_access_token(result.resource_access_token);
-	result.request_response = "OK";
-	result.duration = 1;
 	return &result;
 }
 
@@ -47,9 +93,6 @@ validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, st
 {
 	static char * result;
 
-	/*
-	 * insert server code here
-	 */
 	
 	return &result;
 }
@@ -58,17 +101,22 @@ char **
 approve_request_token_1_svc(char **argp, struct svc_req *rqstp)
 {
 	static char * result;
+	char *token = argp[0];
 
-	// // Read and print each line from the file
-    // char line[LINE_MAX_SIZE];
-	// while (fgets(line, sizeof(line), file3) != NULL) {
-	
-	// }
-
-	/*
-	 * insert server code here
-	 */
-	char *token = (char*) argp;
-	result = strcat(token, SIGNATURE);
+	// Read line from approvals.db
+    char line[LINE_MAX_SIZE];
+	fgets(line, sizeof(line), file3);
+	if (strcmp(line, NO_PERMISSIONS) == 0) {
+		result = token;
+	} else {
+		//add permissions to the token
+		strcpy(token_permissions_list[token_permissions_index].token, token);
+		strcpy(token_permissions_list[token_permissions_index].permissions, line);
+		token_permissions_index++;
+		// sign the token
+		result = strcat(token, SIGNATURE);
+		strcpy(signed_tokens[signed_tokens_index], result);
+		signed_tokens_index++;
+	}
 	return &result;
 }

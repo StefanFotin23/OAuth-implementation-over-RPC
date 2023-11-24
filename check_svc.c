@@ -22,7 +22,9 @@
 int USER_ID_SIZE = 15;
 int RESOURCES_MAX_SIZE = 20;
 FILE *file3;
+int id_count;
 char **user_ids_list;
+int resources_count;
 char **resources_list;
 
 static void
@@ -132,7 +134,7 @@ main (int argc, char **argv)
 
     char line[LINE_MAX_SIZE];
 	fgets(line, sizeof(line), file1);
-	int id_count = atoi(line);
+	id_count = atoi(line);
 	user_ids_list = calloc(id_count, sizeof(char*));
 
 	// Read each line from the file
@@ -149,7 +151,7 @@ main (int argc, char **argv)
 	// RESOURCES.DB
 	FILE *file2 = fopen(resources, "r");
 	fgets(line, sizeof(line), file2);
-	int resources_count = atoi(line);
+	resources_count = atoi(line);
 	resources_list = calloc(id_count, sizeof(char*));
     if (file2 == NULL) {
         perror("Error opening resources.db");
@@ -160,9 +162,9 @@ main (int argc, char **argv)
 		resources_list[i] = calloc(RESOURCES_MAX_SIZE + 1, sizeof(char));
 		fgets(line, sizeof(line), file1);
 		// Copy the line to user_ids_list[i]
-    	strcpy(user_ids_list[i], line);
+    	strcpy(resources_list[i], line);
     	// Ensure null-termination
-    	user_ids_list[i][RESOURCES_MAX_SIZE] = '\0';
+    	resources_list[i][RESOURCES_MAX_SIZE] = '\0';
 	}
 	fclose(file2);
 

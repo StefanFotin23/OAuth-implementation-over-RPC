@@ -16,24 +16,31 @@
 #define EXECUTE "EXECUTE"
 #define INSERT "INSERT"
 #define REQUEST "REQUEST"
+#define REQUEST_DENIED "REQUEST_DENIED"
+#define USER_NOT_FOUND "USER_NOT_FOUND"
+#define OK "OK"
 
 // REQUEST
-void process_request(CLIENT *clnt, char *client_id) {
+void process_request(CLIENT *clnt, char *client_id, int refresh_duration) {
 	// Request Authorization
 	char **auth_token_aux = request_authorization_1(&client_id, clnt);
 	if (auth_token_aux == (char **) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
-	char *auth_token = (char*) &auth_token_aux;
-
-	// if
+	char *auth_token = *auth_token_aux;
+	
+	if (strcmp(auth_token, USER_NOT_FOUND) == 0) {
+		printf(USER_NOT_FOUND);
+		printf("\n");
+		return;
+	}
 
 	// Approve Request Token
 	char **signed_auth_token_aux = approve_request_token_1(&auth_token, clnt);
 	if (signed_auth_token_aux == (char **) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
-	char* signed_auth_token = (char*) &signed_auth_token_aux;
+	char* signed_auth_token = *signed_auth_token_aux;
 
 	// Request Access Token
 	struct request_access_token_input req_acc_token_in;
@@ -44,7 +51,11 @@ void process_request(CLIENT *clnt, char *client_id) {
 		clnt_perror (clnt, "call failed");
 	}
 
-	// if not signed, afisez mesajul de eroare.
+	if (strcmp(req_acc_token_out->request_response, OK) != 0) {
+		printf("  %s\n", req_acc_token_out->request_response);
+	} else {
+		printf("%s -> %s\n", auth_token, req_acc_token_out->resource_access_token);
+	}
 }
 
 int
@@ -81,12 +92,12 @@ main (int argc, char *argv[])
 		char duration_string[WORD_SIZE];
 		int token_duration;
 		strcpy(client_id, strtok(line, DELIMITER));
-		strcpy(operation, strtok(line, DELIMITER));
-		strcpy(duration_string, strtok(line, DELIMITER));
+		strcpy(operation, strtok(NULL, DELIMITER));
+		strcpy(duration_string, strtok(NULL, DELIMITER));
 		token_duration = atoi(duration_string);
 
 		if (strcmp(operation, REQUEST) == 0) {
-			process_request(clnt, client_id);
+			process_request(clnt, client_id, token_duration);
 		} else if (
 			strcmp(operation, READ) == 0 ||
 			strcmp(operation, MODIFY) == 0 ||
