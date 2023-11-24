@@ -12,6 +12,7 @@ struct request_access_token_output {
 };
 
 struct validate_delegated_action_input {
+    string client_id<>;
     string operation<>;
     string resource<>;
     string resource_access_token<>;

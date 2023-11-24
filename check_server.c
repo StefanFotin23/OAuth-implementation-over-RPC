@@ -118,10 +118,11 @@ char **
 validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, struct svc_req *rqstp)
 {
 	static char * result;
+	char* client_id = argp->client_id;
 	char* operation = argp->operation;
 	char* resource = argp->resource;
 	char* resource_access_token = argp->resource_access_token;
-	
+
 	// struct token_permissions {
 	// 	char token[20];
 	// 	char permissions[LINE_MAX_SIZE];
