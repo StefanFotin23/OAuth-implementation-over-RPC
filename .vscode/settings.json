@@ -8,6 +8,7 @@
         "stdlib.h": "c",
         "string.h": "c",
         "socket.h": "c",
-        "pmap_clnt.h": "c"
+        "pmap_clnt.h": "c",
+        "in.h": "c"
     }
 }

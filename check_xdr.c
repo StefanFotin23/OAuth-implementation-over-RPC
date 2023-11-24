@@ -40,6 +40,8 @@ xdr_validate_delegated_action_input (XDR *xdrs, validate_delegated_action_input 
 {
 	register int32_t *buf;
 
+	 if (!xdr_string (xdrs, &objp->client_id, ~0))
+		 return FALSE;
 	 if (!xdr_string (xdrs, &objp->operation, ~0))
 		 return FALSE;
 	 if (!xdr_string (xdrs, &objp->resource, ~0))

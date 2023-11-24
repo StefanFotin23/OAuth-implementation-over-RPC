@@ -113,6 +113,7 @@ main (int argc, char *argv[])
 			struct validate_delegated_action_input validate_delegated_action_in;
 			validate_delegated_action_in.resource_access_token = resource_access_token;
 			validate_delegated_action_in.resource = last_input_field;
+			validate_delegated_action_in.client_id = client_id;
 
 			// Add to input the operation
 			if (strcmp(operation, READ) == 0) {

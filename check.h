@@ -30,6 +30,7 @@ struct request_access_token_output {
 typedef struct request_access_token_output request_access_token_output;
 
 struct validate_delegated_action_input {
+	char *client_id;
 	char *operation;
 	char *resource;
 	char *resource_access_token;
