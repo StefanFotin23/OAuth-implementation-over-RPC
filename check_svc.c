@@ -25,6 +25,7 @@ int id_count;
 char **user_ids_list;
 int resources_count;
 char **resources_list;
+int token_valability;
 
 static void
 checkprog_1(struct svc_req *rqstp, register SVCXPRT *transp)
@@ -116,13 +117,15 @@ main (int argc, char **argv)
 	}
 
 	// Get server data from files
-	if (argc < 4) {
-		printf ("usage: %s userIDs.db resources.db approvals.db\n", argv[0]);
+	if (argc < 5) {
+		printf ("usage: %s userIDs.db resources.db approvals.db token_availability(ex.: 1,2...n)\n", argv[0]);
 		exit (1);
 	}
 	char *userIDs = argv[1];
 	char *resources = argv[2];
 	char *approvals = argv[3];
+	char *token_availability_string = argv[4];
+	token_valability = atoi(token_availability_string);
 
 	// USERIDS.DB
     FILE *file1 = fopen(userIDs, "r");

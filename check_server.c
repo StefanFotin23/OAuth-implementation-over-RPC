@@ -122,7 +122,7 @@ request_access_token_1_svc(struct request_access_token_input *argp, struct svc_r
 		// Save in DB: clientId - resource_access_token
 		strcpy(client_resource_token_list[client_resource_token_index].clientId, client_id);
 		strcpy(client_resource_token_list[client_resource_token_index].resource_access_token, result.resource_access_token);
-		client_resource_token_list[client_resource_token_index].token_duration = 1; // the token is valid once
+		client_resource_token_list[client_resource_token_index].token_duration = token_valability; // number of available operations per token
 		client_resource_token_index++;
 	}
 	else
@@ -146,6 +146,14 @@ validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, st
 	char *resource = argp->resource;
 	char *resource_access_token = argp->resource_access_token;
 	char operation_alias[20];
+
+	// Format resource in order to get rid of potential '\n' at the end of it
+	if (resource[strlen(resource)] == '\n') {
+		resource[strlen(resource)] = '\0';
+	}
+	if (resource[strlen(resource) - 1] == '\n') {
+		resource[strlen(resource) - 1] = '\0';
+	}
 
 	if (strcmp(operation, "R") == 0)
 	{
@@ -183,8 +191,7 @@ validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, st
 	if (token_found == 0)
 	{
 		result = PERMISSION_DENIED;
-		resource[strlen(resource) - 1] = '\0';
-		printf("DENY (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
+		printf("DENY (%s,%s,%s,%d)\n", operation_alias, resource, client_resource_token_list[token_index].resource_access_token, 0);
 		// Force the buffer to be flushed
 		fflush(stdout);
 		return &result;
@@ -193,8 +200,7 @@ validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, st
 	if (strstr(client_resource_token_list[token_index].clientId, client_id) == NULL)
 	{
 		result = PERMISSION_DENIED;
-		resource[strlen(resource) - 1] = '\0';
-		printf("DENY (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
+		printf("DENY (%s,%s,%s,%d)\n", operation_alias, resource, client_resource_token_list[token_index].resource_access_token, 0);
 		// Force the buffer to be flushed
 		fflush(stdout);
 		return &result;
@@ -204,27 +210,26 @@ validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, st
 	if (client_resource_token_list[token_index].token_duration <= 0)
 	{
 		// if the client doesnt have a refresh_token, we can't regenerate it
-		if (strstr(client_resource_token_list[token_index].refresh_token, EMPTY) != NULL)
+		if (strstr(client_resource_token_list[token_index].refresh_token, EMPTY) != NULL ||
+			strstr(client_resource_token_list[token_index].refresh_token, "") != NULL)
 		{
 			result = TOKEN_EXPIRED;
-			resource[strlen(resource) - 1] = '\0';
-			printf("DENY (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
+			printf("DENY (%s,%s,,%d)\n", operation_alias, resource, 0);
 			// Force the buffer to be flushed
 			fflush(stdout);
 			return &result;
 		}
-		// if he has a refresh_token, we use it
-		strcpy(client_resource_token_list[token_index].resource_access_token,
-			   generate_access_token(client_resource_token_list[token_index].refresh_token));
-		strcpy(client_resource_token_list[token_index].refresh_token, EMPTY);
-		client_resource_token_list[token_index].token_duration = 1;
+		// if he has a refresh_token, we use it and regenerate the token valability
+		strcpy(client_resource_token_list[token_index].refresh_token, "");
+		client_resource_token_list[token_index].token_duration = token_valability;
 	}
 
 	// Searching for the resource wanted on the server DB
 	int resource_found = 0;
 	for (int i = 0; i < resources_count; i++)
 	{
-		if (strcmp(resource, resources_list[i]) == 0)
+		if (strstr(resource, resources_list[i]) != NULL ||
+			strstr(resources_list[i], resource) != NULL)
 		{
 			resource_found = 1;
 			break;
@@ -233,8 +238,9 @@ validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, st
 	if (resource_found == 0)
 	{
 		result = RESOURCE_NOT_FOUND;
-		resource[strlen(resource) - 1] = '\0';
-		printf("DENY (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
+		// Decrease the token's duration after doing the operation
+		client_resource_token_list[token_index].token_duration--;
+		printf("DENY (%s,%s,%s,%d)\n", operation_alias, resource, client_resource_token_list[token_index].resource_access_token, client_resource_token_list[token_index].token_duration);
 		// Force the buffer to be flushed
 		fflush(stdout);
 		return &result;
@@ -271,20 +277,18 @@ validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, st
 	if (found_permission == 0)
 	{
 		result = OPERATION_NOT_PERMITTED;
-		// Get rid of \n character at the end of the string
-		resource[strlen(resource) - 1] = '\0';
-		printf("DENY (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
+		// Decrease the token's duration after doing the operation
+		client_resource_token_list[token_index].token_duration--;
+		printf("DENY (%s,%s,%s,%d)\n", operation_alias, resource, resource_access_token, client_resource_token_list[token_index].token_duration);
 		// Force the buffer to be flushed
 		fflush(stdout);
 		return &result;
 	}
 
+	result = PERMISSION_GRANTED;
 	// Decrease the token's duration after doing the operation
 	client_resource_token_list[token_index].token_duration--;
-	result = PERMISSION_GRANTED;
-	// Get rid of \n character at the end of the string
-	resource[strlen(resource) - 1] = '\0';
-	printf("PERMIT (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
+	printf("PERMIT (%s,%s,%s,%d)\n", operation_alias, resource, client_resource_token_list[token_index].resource_access_token, client_resource_token_list[token_index].token_duration);
 	// Force the buffer to be flushed
 	fflush(stdout);
 	return &result;

@@ -10,5 +10,6 @@ extern int resources_count;
 extern char **resources_list;
 extern int USER_ID_SIZE;
 extern int RESOURCES_MAX_SIZE;
+extern int token_valability;
 
 #endif /* SERVER_DATA_H */
