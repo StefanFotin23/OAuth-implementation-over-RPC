@@ -19,6 +19,14 @@
 #define USER_NOT_FOUND "USER_NOT_FOUND"
 #define OK "OK"
 
+struct client_resource_token_list {
+	char clientId[16];
+	char resource_access_token[16];
+};
+
+struct client_resource_token_list client_token_list[20];
+int client_token_index = 0;
+
 // REQUEST
 char* process_request(CLIENT *clnt, char *client_id, int refresh_duration) {
 	// Request Authorization
@@ -100,6 +108,28 @@ main (int argc, char *argv[])
 		if (strcmp(operation, REQUEST) == 0) {
 			token_duration = atoi(last_input_field);
 			strcpy(resource_access_token, process_request(clnt, client_id, token_duration));
+
+			// Search for the index of current client
+			int client_index = -1;
+			int client_found = 0;
+			for (int i = 0; i < client_token_index; i++) {
+				if (strcmp(client_token_list[i].clientId, client_id) == 0) {
+					client_index = i;
+					client_found = 1;
+					break;
+				}
+			}
+
+			if (client_found == 1) {
+				// Update resource access token in DB, for current client
+				strcpy(client_token_list[client_index].resource_access_token, resource_access_token);
+				client_token_index++;
+			} else {
+				// Save the new client and his resource access token in DB
+				strcpy(client_token_list[client_token_index].resource_access_token, resource_access_token);
+				strcpy(client_token_list[client_token_index].clientId, client_id);
+				client_token_index++;
+			}
 		} else if (
 			strcmp(operation, READ) == 0 ||
 			strcmp(operation, MODIFY) == 0 ||
@@ -110,9 +140,24 @@ main (int argc, char *argv[])
 			// OPERATIONS
 			// Validate Delegated Action
 			struct validate_delegated_action_input validate_delegated_action_in;
-			validate_delegated_action_in.resource_access_token = resource_access_token;
 			validate_delegated_action_in.resource = last_input_field;
 			validate_delegated_action_in.client_id = client_id;
+
+			// Search for the clients id in order to provide his resource_access_token
+			int client_index = -1;
+			int client_found = 0;
+			for (int i = 0; i < client_token_index; i++) {
+				if (strcmp(client_token_list[i].clientId, client_id) == 0) {
+					client_index = i;
+					client_found = 1;
+					break;
+				}
+			}
+			if (client_found == 1) {
+			 	validate_delegated_action_in.resource_access_token = client_token_list[client_index].resource_access_token;
+			} else {
+				validate_delegated_action_in.resource_access_token = resource_access_token;
+			}
 
 			// Add to input the operation
 			if (strcmp(operation, READ) == 0) {
@@ -134,7 +179,7 @@ main (int argc, char *argv[])
 			char *request_response = validate_delegated_action_out->request_response;
 			// if the token was regenerated using refresh token, we update it
 			if (strcmp(validate_delegated_action_out->regenerated_resource_access_token, "") != 0) {
-				strcpy(resource_access_token, validate_delegated_action_out->regenerated_resource_access_token);
+				strcpy(client_token_list[client_index].resource_access_token, validate_delegated_action_out->regenerated_resource_access_token);
 			}
 			printf("%s\n", request_response);
 		} else {

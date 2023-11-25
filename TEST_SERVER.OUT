@@ -1,31 +1,18 @@
-BEGIN 74xaLqdTDdHZ9ey AUTHZ
-  RequestToken = e49HDdxTqL7dZya
-  AccessToken = aZy4TLHxqded9D7
-BEGIN f80N46i82fdx61d AUTHZ
-  RequestToken = d10i68x86f4dfN2
-  AccessToken = 2Nx0id84f6d168f
-  RefreshToken = x8f02fd4iN661d8
-PERMIT (READ,Applications,2Nx0id84f6d168f,1)
-PERMIT (EXECUTE,Applications,2Nx0id84f6d168f,0)
-BEGIN f80N46i82fdx61d AUTHZ REFRESH
-  AccessToken = fx62d1i88fN60d4
-  RefreshToken = fid26d8f610xN48
-DENY (DELETE,Applications,fx62d1i88fN60d4,1)
-DENY (READ,Preferences,,0)
-DENY (MODIFY,Preferences,,0)
-DENY (MODIFY,UserData,,0)
-BEGIN 74xaLqdTDdHZ9ey AUTHZ
-  RequestToken = Dqdyd49HLaZ7Tex
-DENY (INSERT,Files,,0)
-DENY (INSERT,Applications,,0)
-BEGIN f80N46i82fdx61d AUTHZ
-  RequestToken = dd1N028if86f64x
-  AccessToken = 1N0f2xd68f648di
-  RefreshToken = 60Nf6x82i4fdd18
-PERMIT (INSERT,Applications,1N0f2xd68f648di,1)
-DENY (DELETE,Files,1N0f2xd68f648di,0)
-BEGIN f80N46i82fdx61d AUTHZ REFRESH
-  AccessToken = iN412fd686x0f8d
-  RefreshToken = 4206Ndf68x1ifd8
-DENY (EXECUTE,Applications,iN412fd686x0f8d,1)
-DENY (DELETE,Applications,,0)
+DENY (READ,UserData,,0)
+BEGIN X5B0TWjmeNtU3vd AUTHZ
+  RequestToken = v53teNBmWTXjUd0
+  AccessToken = 0Ud5mTtBWNvj3eX
+PERMIT (READ,UserData,0Ud5mTtBWNvj3eX,1)
+DENY (DELETE,Preferences,0Ud5mTtBWNvj3eX,0)
+DENY (EXECUTE,UserData,,0)
+BEGIN X5B0TWjmeNtU3vd AUTHZ
+  RequestToken = dvBj3mU5WXTtN0e
+  AccessToken = e0UBjdmTXWtv35N
+DENY (MODIFY,SystemData,,0)
+DENY (EXECUTE,Applications,,0)
+BEGIN QHmJh2xwErPDcmv AUTHZ
+  RequestToken = mxvJQE2whHrcDPm
+BEGIN PYM3XptJ6asHaRp AUTHZ
+  RequestToken = pPHXta6YpMas3RJ
+  AccessToken = p6tXHRYMsa3PaJp
+DENY (EXECUTE,Random,p6tXHRYMsa3PaJp,1)
