@@ -61,9 +61,6 @@ char* process_request(CLIENT *clnt, char *client_id, int refresh_duration) {
 	}
 	if (strcmp(req_acc_token_out->request_response, OK) == 0) {
 		printf("%s -> %s\n", auth_token, req_acc_token_out->resource_access_token);
-		// if (strcmp(req_acc_token_out->refresh_token, "EMPTY") != 0) {
-		// 	printf(",%s\n", req_acc_token_out->refresh_token);
-		// }
 	} else {
 		printf("%s\n", req_acc_token_out->request_response);
 	}
