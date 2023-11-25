@@ -1,11 +1,18 @@
+DENY (READ,UserData,,0)
 BEGIN X5B0TWjmeNtU3vd AUTHZ
   RequestToken = v53teNBmWTXjUd0
   AccessToken = 0Ud5mTtBWNvj3eX
+PERMIT (READ,UserData,0Ud5mTtBWNvj3eX,0)
+DENY (DELETE,Preferences,0Ud5mTtBWNvj3eX,0)
+DENY (EXECUTE,UserData,0Ud5mTtBWNvj3eX,0)
 BEGIN X5B0TWjmeNtU3vd AUTHZ
-  RequestToken = dvBj3mU5WXTtN0e
-  AccessToken = e0UBjdmTXWtv35N
+  RequestToken = dvjB0XWtNeU5Tm3
+  AccessToken = jW3BdNXt0veT5Um
+DENY (MODIFY,SystemData,jW3BdNXt0veT5Um,0)
+DENY (EXECUTE,Applications,jW3BdNXt0veT5Um,0)
 BEGIN QHmJh2xwErPDcmv AUTHZ
-  RequestToken = mxvJQE2whHrcDPm
+  RequestToken = 2QDhxcEHvmrPJmw
 BEGIN PYM3XptJ6asHaRp AUTHZ
-  RequestToken = pPHXta6YpMas3RJ
-  AccessToken = p6tXHRYMsa3PaJp
+  RequestToken = PtX3MRJaHpaYsp6
+  AccessToken = HRp6JtsaM3YPapX
+DENY (EXECUTE,Rando,HRp6JtsaM3YPapX,0)

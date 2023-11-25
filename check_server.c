@@ -21,16 +21,26 @@
 #define PERMISSION_GRANTED "PERMISSION_GRANTED"
 #define OK "OK"
 #define EMPTY "EMPTY"
-#define TOKEN_NOT_FOUND "TOKEN_NOT_FOUND" 
+#define TOKEN_NOT_FOUND "TOKEN_NOT_FOUND"
+#define DELIMITER ","
+#define READ "READ"
+#define MODIFY "MODIFY"
+#define DELETE "DELETE"
+#define EXECUTE "EXECUTE"
+#define INSERT "INSERT"
 
-struct token_permissions {
+struct token_permissions
+{
 	char token[20];
 	char permissions[LINE_MAX_SIZE];
 };
 
-struct client_resource_token {
+struct client_resource_token
+{
 	char clientId[TOKEN_SIZE];
 	char resource_access_token[TOKEN_SIZE];
+	char refresh_token[TOKEN_SIZE];
+	int token_duration;
 };
 
 struct token_permissions token_permissions_list[20];
@@ -44,27 +54,32 @@ char server_resource_access_token[TOKEN_SIZE];
 char **
 request_authorization_1_svc(char **argp, struct svc_req *rqstp)
 {
-	static char * result;
+	static char *result;
 	char *clientId = argp[0]; // Assuming clientId is the first argument
 
 	printf("BEGIN %s AUTHZ\n", clientId);
 
 	int found = 0;
-	for (int i = 0; i < id_count; i++) {
-		if (strcmp(clientId, user_ids_list[i]) == 0) {
+	for (int i = 0; i < id_count; i++)
+	{
+		if (strcmp(clientId, user_ids_list[i]) == 0)
+		{
 			found = 1;
 			break;
 		}
 	}
 
-	if (found == 0) {
+	if (found == 0)
+	{
 		result = USER_NOT_FOUND;
-	} else {
+	}
+	else
+	{
 		result = generate_access_token(clientId);
 		printf("  RequestToken = %s\n", result);
 	}
 	// Force the buffer to be flushed
-    fflush(stdout);
+	fflush(stdout);
 	return &result;
 }
 
@@ -78,22 +93,27 @@ request_access_token_1_svc(struct request_access_token_input *argp, struct svc_r
 
 	// check if the token was signed
 	int found = 0;
-	for (int i = 0; i < signed_tokens_index; i++) {
-		if (strcmp(auth_token, signed_tokens[i]) == 0) {
+	for (int i = 0; i < signed_tokens_index; i++)
+	{
+		if (strcmp(auth_token, signed_tokens[i]) == 0)
+		{
 			found = 1;
 			break;
 		}
 	}
 
 	// if it was signed, continue
-	if (found == 1) {
+	if (found == 1)
+	{
 		// Getting the original auth_token by getting rid of the signature
 		char *auth_token_without_signature = calloc(20, sizeof(char));
 		strncpy(auth_token_without_signature, auth_token, strlen(auth_token) - strlen(SIGNATURE));
 		// generate the new tokens
 		result.resource_access_token = generate_access_token(auth_token_without_signature);
-		if (refresh_duration > 0) {
+		if (refresh_duration > 0)
+		{
 			result.refresh_token = generate_access_token(result.resource_access_token);
+			strcpy(client_resource_token_list[client_resource_token_index].refresh_token, result.refresh_token);
 		}
 		result.request_response = OK;
 		result.refresh_token = EMPTY;
@@ -102,108 +122,190 @@ request_access_token_1_svc(struct request_access_token_input *argp, struct svc_r
 		// Save in DB: clientId - resource_access_token
 		strcpy(client_resource_token_list[client_resource_token_index].clientId, client_id);
 		strcpy(client_resource_token_list[client_resource_token_index].resource_access_token, result.resource_access_token);
+		client_resource_token_list[client_resource_token_index].token_duration = 1; // the token is valid once
 		client_resource_token_index++;
-	} else {
+	}
+	else
+	{
 		result.resource_access_token = REQUEST_DENIED;
 		result.duration = 0;
 		result.refresh_token = REQUEST_DENIED;
 		result.request_response = REQUEST_DENIED;
 	}
 	// Force the buffer to be flushed
-    fflush(stdout);
+	fflush(stdout);
 	return &result;
 }
 
 char **
 validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, struct svc_req *rqstp)
 {
-	static char * result;
-	char* client_id = argp->client_id;
-	char* operation = argp->operation;
-	char* resource = argp->resource;
-	char* resource_access_token = argp->resource_access_token;
+	static char *result;
+	char *client_id = argp->client_id;
+	char *operation = argp->operation;
+	char *resource = argp->resource;
+	char *resource_access_token = argp->resource_access_token;
+	char operation_alias[20];
 
-	// struct token_permissions {
-	// 	char token[20];
-	// 	char permissions[LINE_MAX_SIZE];
-	// };
-	// struct client_resource_token {
-	// 	char clientId[TOKEN_SIZE];
-	// 	char resource_access_token[TOKEN_SIZE];
-	// };
-	// struct token_permissions token_permissions_list[20];
-	// struct client_resource_token client_resource_token_list[20];
+	if (strcmp(operation, "R") == 0)
+	{
+		strcpy(operation_alias, READ);
+	}
+	else if (strcmp(operation, "M") == 0)
+	{
+		strcpy(operation_alias, MODIFY);
+	}
+	else if (strcmp(operation, "D") == 0)
+	{
+		strcpy(operation_alias, DELETE);
+	}
+	else if (strcmp(operation, "X") == 0)
+	{
+		strcpy(operation_alias, EXECUTE);
+	}
+	else if (strcmp(operation, "I") == 0)
+	{
+		strcpy(operation_alias, INSERT);
+	}
 
 	// Searching for the token
 	int token_found = 0;
 	int token_index = -1;
-	for (int i = 0; i < client_resource_token_index; i++) {
-		if (strstr(client_resource_token_list[i].resource_access_token, resource_access_token) != NULL) {
+	for (int i = 0; i < client_resource_token_index; i++)
+	{
+		if (strstr(client_resource_token_list[i].resource_access_token, resource_access_token) != NULL)
+		{
 			token_found = 1;
 			token_index = i;
 			break;
 		}
 	}
-	if (token_found == 0) {
-		result = TOKEN_NOT_FOUND;
-		// Force the buffer to be flushed
-    	fflush(stdout);
-		return &result;
-	}
-
-	// Verify if the resource_token is associated with the clientId
-	if (strstr(client_resource_token_list[token_index].clientId, client_id) == NULL) {
+	if (token_found == 0)
+	{
 		result = PERMISSION_DENIED;
+		resource[strlen(resource) - 1] = '\0';
+		printf("DENY (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
 		// Force the buffer to be flushed
-    	fflush(stdout);
+		fflush(stdout);
+		return &result;
+	}
+	// Verify if the resource_token is associated with the clientId
+	if (strstr(client_resource_token_list[token_index].clientId, client_id) == NULL)
+	{
+		result = PERMISSION_DENIED;
+		resource[strlen(resource) - 1] = '\0';
+		printf("DENY (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
+		// Force the buffer to be flushed
+		fflush(stdout);
 		return &result;
 	}
 
+	// Verify if the resource_token_expired
+	if (client_resource_token_list[token_index].token_duration <= 0)
+	{
+		// if the client doesnt have a refresh_token, we can't regenerate it
+		if (strstr(client_resource_token_list[token_index].refresh_token, EMPTY) != NULL)
+		{
+			result = TOKEN_EXPIRED;
+			resource[strlen(resource) - 1] = '\0';
+			printf("DENY (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
+			// Force the buffer to be flushed
+			fflush(stdout);
+			return &result;
+		}
+		// if he has a refresh_token, we use it
+		strcpy(client_resource_token_list[token_index].resource_access_token,
+			   generate_access_token(client_resource_token_list[token_index].refresh_token));
+		strcpy(client_resource_token_list[token_index].refresh_token, EMPTY);
+		client_resource_token_list[token_index].token_duration = 1;
+	}
 
 	// Searching for the resource wanted on the server DB
 	int resource_found = 0;
-	for (int i = 0; i < resources_count; i++) {
-		if (strcmp(resource, resources_list[i]) == 0) {
+	for (int i = 0; i < resources_count; i++)
+	{
+		if (strcmp(resource, resources_list[i]) == 0)
+		{
 			resource_found = 1;
 			break;
 		}
 	}
-	if (resource_found == 0) {
+	if (resource_found == 0)
+	{
 		result = RESOURCE_NOT_FOUND;
+		resource[strlen(resource) - 1] = '\0';
+		printf("DENY (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
 		// Force the buffer to be flushed
-    	fflush(stdout);
+		fflush(stdout);
 		return &result;
 	}
 
 	// Searching for permissions for the operation
-	if (strstr(operation, token_permissions_list[token_index].permissions) == NULL) {
+	int found_permission = 0;
+	int found_resource = 0;
+	char line[256]; // Adjust the size as needed
+	// Copy the Permissions string to a temporary buffer
+	strncpy(line, token_permissions_list[token_index].permissions, sizeof(line));
+	line[sizeof(line) - 1] = '\0';
+	char *token = strtok(line, DELIMITER);
+	while (token != NULL)
+	{
+		// Reading resource
+		if (strstr(token, resource) != NULL || strstr(resource, token) != NULL)
+		{
+			found_resource = 1;
+		}
+		token = strtok(NULL, DELIMITER);
+		// Reading permission on the resource
+		if (found_resource == 1)
+		{
+			if (strstr(operation, token) != NULL || strstr(token, operation) != NULL)
+			{
+				found_permission = 1;
+			}
+			break;
+		}
+		token = strtok(NULL, DELIMITER);
+	}
+
+	if (found_permission == 0)
+	{
 		result = OPERATION_NOT_PERMITTED;
+		// Get rid of \n character at the end of the string
+		resource[strlen(resource) - 1] = '\0';
+		printf("DENY (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
 		// Force the buffer to be flushed
-    	fflush(stdout);
+		fflush(stdout);
 		return &result;
 	}
 
-
-
+	// Decrease the token's duration after doing the operation
+	client_resource_token_list[token_index].token_duration--;
 	result = PERMISSION_GRANTED;
+	// Get rid of \n character at the end of the string
+	resource[strlen(resource) - 1] = '\0';
+	printf("PERMIT (%s,%s,%s,0)\n", operation_alias, resource, resource_access_token);
 	// Force the buffer to be flushed
-    fflush(stdout);
+	fflush(stdout);
 	return &result;
 }
 
 char **
 approve_request_token_1_svc(char **argp, struct svc_req *rqstp)
 {
-	static char * result;
+	static char *result;
 	char *token = argp[0];
 
 	// Read line from approvals.db
-    char line[LINE_MAX_SIZE];
+	char line[LINE_MAX_SIZE];
 	fgets(line, sizeof(line), file3);
-	if (strstr(line, "*,-") != NULL) {
+	if (strstr(line, "*,-") != NULL)
+	{
 		result = token;
-	} else {
-		//add permissions to the token
+	}
+	else
+	{
+		// add permissions to the token
 		strcpy(token_permissions_list[token_permissions_index].token, token);
 		strcpy(token_permissions_list[token_permissions_index].permissions, line);
 		token_permissions_index++;
@@ -213,6 +315,6 @@ approve_request_token_1_svc(char **argp, struct svc_req *rqstp)
 		signed_tokens_index++;
 	}
 	// Force the buffer to be flushed
-    fflush(stdout);
+	fflush(stdout);
 	return &result;
 }
