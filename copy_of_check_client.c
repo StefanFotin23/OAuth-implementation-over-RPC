@@ -132,10 +132,7 @@ main (int argc, char *argv[])
 				clnt_perror (clnt, "call failed");
 			}
 			char *request_response = validate_delegated_action_out->request_response;
-			// if the token was regenerated using refresh token, we update it
-			if (strcmp(validate_delegated_action_out->regenerated_resource_access_token, "") != 0) {
-				strcpy(resource_access_token, validate_delegated_action_out->regenerated_resource_access_token);
-			}
+			strcpy(resource_access_token, validate_delegated_action_out->regenerated_resource_access_token);
 			printf("%s\n", request_response);
 		} else {
 			printf("Operation=%s unexpected!", operation);

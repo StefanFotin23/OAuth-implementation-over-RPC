@@ -50,3 +50,15 @@ xdr_validate_delegated_action_input (XDR *xdrs, validate_delegated_action_input 
 		 return FALSE;
 	return TRUE;
 }
+
+bool_t
+xdr_validate_delegated_action_output (XDR *xdrs, validate_delegated_action_output *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_string (xdrs, &objp->request_response, ~0))
+		 return FALSE;
+	 if (!xdr_string (xdrs, &objp->regenerated_resource_access_token, ~0))
+		 return FALSE;
+	return TRUE;
+}

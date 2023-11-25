@@ -18,6 +18,11 @@ struct validate_delegated_action_input {
     string resource_access_token<>;
 };
 
+struct validate_delegated_action_output {
+    string request_response<>;
+    string regenerated_resource_access_token<>;
+};
+
 program CHECKPROG {
     version CHECKVERS {
         /* auth_token request_authorization(client_id) */
@@ -26,8 +31,8 @@ program CHECKPROG {
         /* (resource_access_token + refresh_token + duration + request_response) request_access_token(client_id + auth_token) */
         struct request_access_token_output request_access_token(struct request_access_token_input) = 2;
         
-        /* request_response validate_delegated_action(operation + resource + resource_access_token) */
-        string validate_delegated_action(struct validate_delegated_action_input) = 3;
+        /* struct validate_delegated_action_output (request_response, regenerated_resource_access_token) validate_delegated_action(operation + resource + resource_access_token) */
+        struct validate_delegated_action_output validate_delegated_action(struct validate_delegated_action_input) = 3;
         
         /* signed_auth_token approve_request_token(auth_token) */
         string approve_request_token(string) = 4;

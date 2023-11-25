@@ -59,7 +59,7 @@ checkprog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 
 	case validate_delegated_action:
 		_xdr_argument = (xdrproc_t) xdr_validate_delegated_action_input;
-		_xdr_result = (xdrproc_t) xdr_wrapstring;
+		_xdr_result = (xdrproc_t) xdr_validate_delegated_action_output;
 		local = (char *(*)(char *, struct svc_req *)) validate_delegated_action_1_svc;
 		break;
 

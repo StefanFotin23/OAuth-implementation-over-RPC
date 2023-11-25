@@ -39,15 +39,15 @@ request_access_token_1(struct request_access_token_input *argp, CLIENT *clnt)
 	return (&clnt_res);
 }
 
-char **
+struct validate_delegated_action_output *
 validate_delegated_action_1(struct validate_delegated_action_input *argp, CLIENT *clnt)
 {
-	static char *clnt_res;
+	static struct validate_delegated_action_output clnt_res;
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
 	if (clnt_call (clnt, validate_delegated_action,
 		(xdrproc_t) xdr_validate_delegated_action_input, (caddr_t) argp,
-		(xdrproc_t) xdr_wrapstring, (caddr_t) &clnt_res,
+		(xdrproc_t) xdr_validate_delegated_action_output, (caddr_t) &clnt_res,
 		TIMEOUT) != RPC_SUCCESS) {
 		return (NULL);
 	}

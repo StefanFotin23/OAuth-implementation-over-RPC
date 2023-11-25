@@ -37,6 +37,12 @@ struct validate_delegated_action_input {
 };
 typedef struct validate_delegated_action_input validate_delegated_action_input;
 
+struct validate_delegated_action_output {
+	char *request_response;
+	char *regenerated_resource_access_token;
+};
+typedef struct validate_delegated_action_output validate_delegated_action_output;
+
 #define CHECKPROG 0x23072001
 #define CHECKVERS 1
 
@@ -48,8 +54,8 @@ extern  char ** request_authorization_1_svc(char **, struct svc_req *);
 extern  struct request_access_token_output * request_access_token_1(struct request_access_token_input *, CLIENT *);
 extern  struct request_access_token_output * request_access_token_1_svc(struct request_access_token_input *, struct svc_req *);
 #define validate_delegated_action 3
-extern  char ** validate_delegated_action_1(struct validate_delegated_action_input *, CLIENT *);
-extern  char ** validate_delegated_action_1_svc(struct validate_delegated_action_input *, struct svc_req *);
+extern  struct validate_delegated_action_output * validate_delegated_action_1(struct validate_delegated_action_input *, CLIENT *);
+extern  struct validate_delegated_action_output * validate_delegated_action_1_svc(struct validate_delegated_action_input *, struct svc_req *);
 #define approve_request_token 4
 extern  char ** approve_request_token_1(char **, CLIENT *);
 extern  char ** approve_request_token_1_svc(char **, struct svc_req *);
@@ -63,8 +69,8 @@ extern  char ** request_authorization_1_svc();
 extern  struct request_access_token_output * request_access_token_1();
 extern  struct request_access_token_output * request_access_token_1_svc();
 #define validate_delegated_action 3
-extern  char ** validate_delegated_action_1();
-extern  char ** validate_delegated_action_1_svc();
+extern  struct validate_delegated_action_output * validate_delegated_action_1();
+extern  struct validate_delegated_action_output * validate_delegated_action_1_svc();
 #define approve_request_token 4
 extern  char ** approve_request_token_1();
 extern  char ** approve_request_token_1_svc();
@@ -77,11 +83,13 @@ extern int checkprog_1_freeresult ();
 extern  bool_t xdr_request_access_token_input (XDR *, request_access_token_input*);
 extern  bool_t xdr_request_access_token_output (XDR *, request_access_token_output*);
 extern  bool_t xdr_validate_delegated_action_input (XDR *, validate_delegated_action_input*);
+extern  bool_t xdr_validate_delegated_action_output (XDR *, validate_delegated_action_output*);
 
 #else /* K&R C */
 extern bool_t xdr_request_access_token_input ();
 extern bool_t xdr_request_access_token_output ();
 extern bool_t xdr_validate_delegated_action_input ();
+extern bool_t xdr_validate_delegated_action_output ();
 
 #endif /* K&R C */
 
