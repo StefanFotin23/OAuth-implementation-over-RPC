@@ -116,9 +116,10 @@ request_access_token_1_svc(struct request_access_token_input *argp, struct svc_r
 			result.refresh_token = generate_access_token(result.resource_access_token);
 			strcpy(client_resource_token_list[client_resource_token_index].refresh_token, result.refresh_token);
 			printf("  RefreshToken = %s\n", result.refresh_token);
+		} else {
+			result.refresh_token = EMPTY;
 		}
 		result.request_response = OK;
-		result.refresh_token = EMPTY;
 		result.duration = refresh_duration;
 		// Save in DB: clientId - resource_access_token
 		strcpy(client_resource_token_list[client_resource_token_index].clientId, client_id);
@@ -226,9 +227,13 @@ validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, st
 		{
 			result.request_response = TOKEN_EXPIRED;
 			if (result.regenerated_resource_access_token == NULL)
-		{
-			result.regenerated_resource_access_token = "";
-		}
+			{
+				result.regenerated_resource_access_token = "";
+			}
+
+			// we delete the resource_access_token from the client
+			strcpy(client_resource_token_list[token_index].resource_access_token, "");
+
 			printf("DENY (%s,%s,,%d)\n", operation_alias, resource, 0);
 			// Force the buffer to be flushed
 			fflush(stdout);
@@ -318,9 +323,9 @@ validate_delegated_action_1_svc(struct validate_delegated_action_input *argp, st
 
 	result.request_response = PERMISSION_GRANTED;
 	if (result.regenerated_resource_access_token == NULL)
-		{
-			result.regenerated_resource_access_token = "";
-		}
+	{
+		result.regenerated_resource_access_token = "";
+	}
 	// Decrease the token's duration after doing the operation
 	client_resource_token_list[token_index].token_duration--;
 	printf("PERMIT (%s,%s,%s,%d)\n", operation_alias, resource, client_resource_token_list[token_index].resource_access_token, client_resource_token_list[token_index].token_duration);

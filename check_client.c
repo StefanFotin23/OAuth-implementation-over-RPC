@@ -61,6 +61,9 @@ char* process_request(CLIENT *clnt, char *client_id, int refresh_duration) {
 	}
 	if (strcmp(req_acc_token_out->request_response, OK) == 0) {
 		printf("%s -> %s\n", auth_token, req_acc_token_out->resource_access_token);
+		// if (strcmp(req_acc_token_out->refresh_token, "EMPTY") != 0) {
+		// 	printf(",%s\n", req_acc_token_out->refresh_token);
+		// }
 	} else {
 		printf("%s\n", req_acc_token_out->request_response);
 	}
@@ -123,7 +126,6 @@ main (int argc, char *argv[])
 			if (client_found == 1) {
 				// Update resource access token in DB, for current client
 				strcpy(client_token_list[client_index].resource_access_token, resource_access_token);
-				client_token_index++;
 			} else {
 				// Save the new client and his resource access token in DB
 				strcpy(client_token_list[client_token_index].resource_access_token, resource_access_token);
